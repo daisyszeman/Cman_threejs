@@ -373,7 +373,9 @@
 
 				window.addEventListener( 'resize', onWindowResize );
 
-				audio.play(); // playing the street sound audio
+				window.addEventListener( 'click', playAudio );
+
+				
 
 			}
 
@@ -473,6 +475,10 @@
 			}
 
 			//
+
+			function playAudio(){
+				audio.play(); // playing the street sound audio
+			}
 
 			function animate() {
 
