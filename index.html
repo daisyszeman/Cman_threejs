@@ -68,19 +68,17 @@
 			///////////music analysis///////////
 			//We are only analysing the music of the ambient to trigger the transformation of the 3D objects
 			var audio = new Audio("assets/streetSound.mp3");   //Letting audio as the street sound
-				audio.play(); // playing the street sound audio
-
-
-				//audio analyser setup
-				//////Analysing the street sound audio//////
-				var context = new AudioContext();
-				var src = context.createMediaElementSource(audio); //creating the source as audio(the street sound)
-				var analyser = context.createAnalyser(); //create an analyser 
-				src.connect(analyser); 
-				analyser.connect(context.destination);
-				analyser.fftSize = 512;
-				var bufferLength = analyser.frequencyBinCount;
-				var dataArray = new Uint8Array(bufferLength);
+			
+			//audio analyser setup
+			//////Analysing the street sound audio//////
+			var context = new AudioContext();
+			var src = context.createMediaElementSource(audio); //creating the source as audio(the street sound)
+			var analyser = context.createAnalyser(); //create an analyser 
+			src.connect(analyser); 
+			analyser.connect(context.destination);
+			analyser.fftSize = 512;
+			var bufferLength = analyser.frequencyBinCount;
+			var dataArray = new Uint8Array(bufferLength);
 			///////////music analysis///////////
 
 			init();
@@ -374,6 +372,8 @@
 				//
 
 				window.addEventListener( 'resize', onWindowResize );
+
+				audio.play(); // playing the street sound audio
 
 			}
 
