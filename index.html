@@ -269,7 +269,7 @@
 				const floor = new THREE.Mesh( floorGeometry, floorMaterial );
 				floor.rotation.x = - Math.PI / 2;
 				floor.receiveShadow = true;
-				scene.add( floor );
+				//scene.add( floor );
 
 				scene.add( new THREE.HemisphereLight( 0x808080, 0x606060 ) );
 
@@ -281,7 +281,7 @@
 				light.shadow.camera.right = 2;
 				light.shadow.camera.left = - 2;
 				light.shadow.mapSize.set( 4096, 4096 );
-				scene.add( light );
+				//scene.add( light );
 
 				group = new THREE.Group();
 				scene.add( group );
@@ -318,7 +318,7 @@
 					object.castShadow = true;
 					object.receiveShadow = true;
 
-					group.add( object );
+					//group.add( object );
 
 				}
 
@@ -601,7 +601,7 @@
 				renderer.render( scene, camera );
 			};
 			
-			//render2();
+			render2();
 
 			//Helper function
 			//Reference from : https://jsfiddle.net/bentoBAUX/839b7q5p/12/ [audio analysis]
