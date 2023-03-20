@@ -37,6 +37,9 @@
 			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 			import { VRButton } from 'three/addons/webxr/VRButton.js';
 			import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
+			import { GLTFLoader } from '/three/examples/jsm/loaders/GLTFLoader.js';
+			import { RGBELoader } from '/three/examples/jsm/loaders/RGBELoader.js';
+
 
 			let container;
 			let camera, scene, renderer;
@@ -67,6 +70,20 @@
 				controls = new OrbitControls( camera, container );
 				controls.target.set( 0, 1.6, 0 );
 				controls.update();
+
+				//GLTF loader: Head
+				const loader = new GLTFLoader()
+				loader.load('assets/newheadv2.gltf', function(gltf){
+					console.log(gltf)
+					const root = gltf.scene;
+					root.scale.set(0.1,0.1,0.1)
+					scene.add(root);
+				},function(xhr){
+					console.log((xhr.loader/xhr.total * 100) + "% loaded")
+				},function(error){
+					console.log('An error occurred')
+				})
+
 
 				const floorGeometry = new THREE.PlaneGeometry( 4, 4 );
 				const floorMaterial = new THREE.MeshStandardMaterial( {
