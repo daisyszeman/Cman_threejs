@@ -375,6 +375,8 @@
 
 				window.addEventListener( 'click', playAudio );
 
+				playAudio();
+
 				
 
 			}
@@ -424,6 +426,7 @@
 
 				}
 
+				playAudio();
 
 			}
 
@@ -435,6 +438,8 @@
 				raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
 
 				return raycaster.intersectObjects( group.children, false );
+
+				playAudio();
 
 			}
 
