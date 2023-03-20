@@ -19,13 +19,16 @@
             <source src="assets/synthesizer.mp3" type="audio/mpeg">
         </audio>
 
+		<!-- Import maps polyfill -->
+		<!-- Remove this when import maps will be widely supported -->
+		<!-- <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script> -->
 
 		<script type="importmap">
 			{
 				"imports": {
-					"three": "https://github.com/daisyszeman/Cman_threejs/blob/main/three/build/three.module.js",
-					"three/addons/": "https://github.com/daisyszeman/Cman_threejs/tree/main/three/examples/jsm"
-				}
+					"three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+					"three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+					}
 			}
 		</script>
 
@@ -39,10 +42,15 @@
 	//Reference from : https://www.youtube.com/watch?v=yPA2z7fl4J8 [GLTF loader]
 	//
 
-			import * as THREE from  'three';
-			import { OrbitControls } from 'https://github.com/daisyszeman/Cman_threejs/blob/main/three/examples/jsm/controls/OrbitControls.js';
-			import { GLTFLoader } from 'https://github.com/daisyszeman/Cman_threejs/blob/main/three/examples/jsm/loaders/GLTFLoader.js';
-			import { RGBELoader } from 'https://github.com/daisyszeman/Cman_threejs/blob/main/three/examples/jsm/loaders/RGBELoader.js';
+			// import * as THREE from  'three';
+			// import { OrbitControls } from '/three/examples/jsm/controls/OrbitControls.js';
+			// import { GLTFLoader } from '/three/examples/jsm/loaders/GLTFLoader.js';
+			// import { RGBELoader } from '/three/examples/jsm/loaders/RGBELoader.js';
+
+			import * as THREE from  './three/build/three.module.js';
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
 let camera, scene, renderer, clock;
 
