@@ -21,7 +21,7 @@
 
 		<!-- Import maps polyfill -->
 		<!-- Remove this when import maps will be widely supported -->
-		<!-- <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script> -->
+		<script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
 
 		<script type="importmap">
 			{
@@ -33,409 +33,269 @@
 		</script>
 
 		<script type="module">
-	//ThreeJS.ImmersiveSoundPrototype
-	//Author: Sze Man Chiu ,Wing Hei Cheryl Hui ,Wei Lee, Yuan Peng, Jaime To 
-	//Reference from : https://github.com/mrdoob/three.js/blob/master/examples/webaudio_sandbox.html [Positional Audio Part]
-	//Reference from : https://threejs.org/examples/?q=sphere#webgl_morphtargets_sphere [3D shape updates]
-	//Reference from : https://jsfiddle.net/bentoBAUX/839b7q5p/12/ [audio analysis]
-	//Reference from : https://www.youtube.com/watch?v=0pCpRvoOTBs&list=PLsIKyI8X98GLXIzQrtTJGfsCHgFFKmGxM [Orbit Control]
-	//Reference from : https://www.youtube.com/watch?v=yPA2z7fl4J8 [GLTF loader]
-	//
-
-			// import * as THREE from  'three';
-			// import { OrbitControls } from '/three/examples/jsm/controls/OrbitControls.js';
-			// import { GLTFLoader } from '/three/examples/jsm/loaders/GLTFLoader.js';
-			// import { RGBELoader } from '/three/examples/jsm/loaders/RGBELoader.js';
-
-			import * as THREE from  './three/build/three.module.js';
+			import * as THREE from 'three';
 			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-			import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+			import { VRButton } from 'three/addons/webxr/VRButton.js';
+			import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
 
-let camera, scene, renderer, clock;
+			let container;
+			let camera, scene, renderer;
+			let controller1, controller2;
+			let controllerGrip1, controllerGrip2;
 
-var mesh;
-var mesh2;
-var mesh3;
+			let raycaster;
 
+			const intersected = [];
+			const tempMatrix = new THREE.Matrix4();
 
-let sign = 1;
-const speed = 0.5;
+			let controls, group;
 
-init();
-animate();
+			init();
+			animate();
 
+			function init() {
 
-function init() {
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
 
-	//const container = document.getElementById( 'container' );
-	const container = document.createElement( 'div' );
-	document.body.appendChild( container );
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x808080 );
 
-	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.2, 100 );
-	camera.position.set( 0, 5, 5 );
+				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 10 );
+				camera.position.set( 0, 1.6, 3 );
 
-	scene = new THREE.Scene();
-	//scene.background = new THREE.Color(0xffffff);
+				controls = new OrbitControls( camera, container );
+				controls.target.set( 0, 1.6, 0 );
+				controls.update();
 
-	clock = new THREE.Clock();
+				const floorGeometry = new THREE.PlaneGeometry( 4, 4 );
+				const floorMaterial = new THREE.MeshStandardMaterial( {
+					color: 0xeeeeee,
+					roughness: 1.0,
+					metalness: 0.0
+				} );
+				const floor = new THREE.Mesh( floorGeometry, floorMaterial );
+				floor.rotation.x = - Math.PI / 2;
+				floor.receiveShadow = true;
+				scene.add( floor );
 
-	const light1 = new THREE.PointLight( 0xffffff, 0.7 );
-	light1.position.set( 100, 100, 100 );
-	scene.add( light1 );
+				scene.add( new THREE.HemisphereLight( 0x808080, 0x606060 ) );
 
-	const light2 = new THREE.PointLight( 0x22ff00, 0.7 );
-	light2.position.set( - 100, - 100, - 100 );
-	scene.add( light2 );
+				const light = new THREE.DirectionalLight( 0xffffff );
+				light.position.set( 0, 6, 0 );
+				light.castShadow = true;
+				light.shadow.camera.top = 2;
+				light.shadow.camera.bottom = - 2;
+				light.shadow.camera.right = 2;
+				light.shadow.camera.left = - 2;
+				light.shadow.mapSize.set( 4096, 4096 );
+				scene.add( light );
 
-	const light3 = new THREE.PointLight( 0xff2200, 0.7 );
-	light1.position.set( 100, 150, 100 );
-	scene.add( light1 );
+				group = new THREE.Group();
+				scene.add( group );
 
-	scene.add( new THREE.AmbientLight( 0x111111 ) );
+				const geometries = [
+					new THREE.BoxGeometry( 0.2, 0.2, 0.2 ),
+					new THREE.ConeGeometry( 0.2, 0.2, 64 ),
+					new THREE.CylinderGeometry( 0.2, 0.2, 0.2, 64 ),
+					new THREE.IcosahedronGeometry( 0.2, 8 ),
+					new THREE.TorusGeometry( 0.2, 0.04, 64, 32 )
+				];
 
+				for ( let i = 0; i < 50; i ++ ) {
 
-//Reference from : https://www.youtube.com/watch?v=yPA2z7fl4J8 [GLTF loader]
-//GLTF loader: Head
-const loader = new GLTFLoader()
-loader.load('assets/newheadv2.gltf', function(gltf){ //'assets/newheadv2.gltf'
-    console.log(gltf)
-    const root = gltf.scene;
-    root.scale.set(0.1,0.1,0.1)
-    scene.add(root);
-},function(xhr){
-    console.log((xhr.loader/xhr.total * 100) + "% loaded")
-},function(error){
-    console.log('An error occurred')
-})
-
-
-//=========Audio Object Part=============
-//Reference from : https://github.com/mrdoob/three.js/blob/master/examples/webaudio_sandbox.html [Positional Audio Part]
-// create an AudioListener and add it to the camera
-const listener = new THREE.AudioListener();
-camera.add( listener );
-
-	//////////first model///////////////
-	// loading in 3D ear object
-	loader.load( '/assets/earBluishgreen.gltf', function ( gltf ) {
-		gltf.scene.traverse( function ( node ) {
-						if ( node.isMesh ) mesh = node;
+					const geometry = geometries[ Math.floor( Math.random() * geometries.length ) ];
+					const material = new THREE.MeshStandardMaterial( {
+						color: Math.random() * 0xffffff,
+						roughness: 0.7,
+						metalness: 0.0
 					} );
-					mesh.material.morphTargets = true;
-					mesh.rotation.z = Math.PI / 2; // rotate the object along z axis 
-					mesh.position.set(5.2,0,0); //setting the object's position
-					mesh.material.visible = true; //showing the material of the object
-					
-					scene.add( mesh ); //adding the object to the scene
 
-		//Adding audio part
-				const sound1 = new THREE.PositionalAudio( listener ); //adding positional audio listener
-				const songElement = document.getElementById( 'drum' ); //locating the drum track 
-				sound1.setMediaElementSource( songElement );  //set the audio as the drum track
-				sound1.setRefDistance( 20 ); //set referenece distance
-				songElement.play(); //play the audio part
-				mesh.add( sound1 ); // add the audio part to the object, the ear
-		
-		var pointsMaterial = new THREE.PointsMaterial( {
-			size: 10,
-			sizeAttenuation: false,
-			map: new THREE.TextureLoader().load( 'assets/disc.png' ),
-			alphaTest: 0.5,
-			//morphTargets: true
-		} );
+					const object = new THREE.Mesh( geometry, material );
 
-		var points = new THREE.Points( mesh.geometry, pointsMaterial );
-		
-		console.log(pointsMaterial);
+					object.position.x = Math.random() * 4 - 2;
+					object.position.y = Math.random() * 2;
+					object.position.z = Math.random() * 4 - 2;
 
-		points.morphTargetInfluences = mesh.morphTargetInfluences;
-		console.log(mesh.morphTargetInfluences)
-		points.morphTargetDictionary = mesh.morphTargetDictionary;
+					object.rotation.x = Math.random() * 2 * Math.PI;
+					object.rotation.y = Math.random() * 2 * Math.PI;
+					object.rotation.z = Math.random() * 2 * Math.PI;
 
-		mesh.add( points );
+					object.scale.setScalar( Math.random() + 0.5 );
 
-	} );
+					object.castShadow = true;
+					object.receiveShadow = true;
 
+					group.add( object );
 
-	//////////second model///////////////
-	// loading in 3D ear object
-	loader.load( '/assets/earBluishgreen.gltf', function ( gltf ) {
-		gltf.scene.traverse( function ( node ) {
-						if ( node.isMesh ) mesh2 = node;
-					} );
-					mesh2.material.morphTargets = true;
-					mesh2.rotation.z = Math.PI / 4; // rotate the object along z axis 
-					mesh2.position.set(-5.2,0,0); //set the position of the object
-					//mesh.material.visible = true;
-					
-					scene.add( mesh2 ); // add the object to the scene
+				}
 
-	//Adding audio part
-				const sound2 = new THREE.PositionalAudio( listener ); //adding positional audio listener
-				const skullbeatzElement = document.getElementById( 'piano' ); //locating the piano track
-				sound2.setMediaElementSource( skullbeatzElement ); //set the audio as the piano track
-				sound2.setRefDistance( 20 ); //set referenece distance
-				skullbeatzElement.play(); //play the audio part
-				mesh2.add( sound2 ); // add the audio part to the object, the ear
-					
-		//
-		var pointsMaterial = new THREE.PointsMaterial( {
-			size: 10,
-			sizeAttenuation: false,
-			map: new THREE.TextureLoader().load( 'assets/disc.png' ),
-			alphaTest: 0.5,
-			//morphTargets: true
-		} );
+				//
 
-		var points = new THREE.Points( mesh2.geometry, pointsMaterial );
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.outputEncoding = THREE.sRGBEncoding;
+				renderer.shadowMap.enabled = true;
+				renderer.xr.enabled = true;
+				container.appendChild( renderer.domElement );
 
-		points.morphTargetInfluences = mesh2.morphTargetInfluences;
-		points.morphTargetDictionary = mesh2.morphTargetDictionary;
+				document.body.appendChild( VRButton.createButton( renderer ) );
 
-		mesh2.add( points );
+				// controllers
 
-	} );
+				controller1 = renderer.xr.getController( 0 );
+				controller1.addEventListener( 'selectstart', onSelectStart );
+				controller1.addEventListener( 'selectend', onSelectEnd );
+				scene.add( controller1 );
 
-	//////////third model///////////////
-	// loading in 3D metal brain object (the small brain inside the scene)
-	loader.load( '/assets/metalbrain.gltf', function ( gltf ) {
-		gltf.scene.traverse( function ( node ) {
-						if ( node.isMesh ) mesh3 = node;
-					} );
-					mesh3.material.morphTargets = true;
-					mesh3.position.set(0,2,6); //setting the position of the object
-					//mesh.material.visible = true;
-					
-					scene.add( mesh3 ); // add the object to the scene
+				controller2 = renderer.xr.getController( 1 );
+				controller2.addEventListener( 'selectstart', onSelectStart );
+				controller2.addEventListener( 'selectend', onSelectEnd );
+				scene.add( controller2 );
 
-	//sound part
-				const sound3 = new THREE.PositionalAudio( listener ); //adding positional audio listener
-				const synthElement = document.getElementById( 'synthesizer' );//locating the synthesizer track
-				sound3.setMediaElementSource( synthElement );//set the audio as the synthesizer track
-				sound3.setRefDistance( 20 );//set referenece distance
-				synthElement.play();//play the audio part
-				mesh3.add( sound3 );// add the audio part to the object, the brain
-					
-		//
-		var pointsMaterial = new THREE.PointsMaterial( {
-			size: 10,
-			sizeAttenuation: false,
-			map: new THREE.TextureLoader().load( 'assets/disc.png' ),
-			alphaTest: 0.5,
-			//morphTargets: true
-		} );
+				const controllerModelFactory = new XRControllerModelFactory();
 
-		var points = new THREE.Points( mesh3.geometry, pointsMaterial );
+				controllerGrip1 = renderer.xr.getControllerGrip( 0 );
+				controllerGrip1.add( controllerModelFactory.createControllerModel( controllerGrip1 ) );
+				scene.add( controllerGrip1 );
 
-		points.morphTargetInfluences = mesh3.morphTargetInfluences;
-		points.morphTargetDictionary = mesh3.morphTargetDictionary;
+				controllerGrip2 = renderer.xr.getControllerGrip( 1 );
+				controllerGrip2.add( controllerModelFactory.createControllerModel( controllerGrip2 ) );
+				scene.add( controllerGrip2 );
 
-		mesh3.add( points );
+				//
 
-	} );
+				const geometry = new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, - 1 ) ] );
 
+				const line = new THREE.Line( geometry );
+				line.name = 'line';
+				line.scale.z = 5;
 
-	///////////////////////RENDERER//////////////////////
-	renderer = new THREE.WebGLRenderer();
-	renderer.setPixelRatio( window.devicePixelRatio );
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	container.appendChild( renderer.domElement );
+				controller1.add( line.clone() );
+				controller2.add( line.clone() );
+
+				raycaster = new THREE.Raycaster();
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function onSelectStart( event ) {
+
+				const controller = event.target;
+
+				const intersections = getIntersections( controller );
+
+				if ( intersections.length > 0 ) {
+
+					const intersection = intersections[ 0 ];
+
+					const object = intersection.object;
+					object.material.emissive.b = 1;
+					controller.attach( object );
+
+					controller.userData.selected = object;
+
+				}
+
+			}
+
+			function onSelectEnd( event ) {
+
+				const controller = event.target;
+
+				if ( controller.userData.selected !== undefined ) {
+
+					const object = controller.userData.selected;
+					object.material.emissive.b = 0;
+					group.attach( object );
+
+					controller.userData.selected = undefined;
+
+				}
 
 
-	//Reference from : https://www.youtube.com/watch?v=0pCpRvoOTBs&list=PLsIKyI8X98GLXIzQrtTJGfsCHgFFKmGxM [Orbit Control]
-	////////////////////Orbit Control START//////////////////////////
-	const controls = new OrbitControls( camera, renderer.domElement );
-	
-	//orbit control by mouse
-	controls.mouseButtons = {
-		LEFT: THREE.MOUSE.ROTATE,
-		MIDDLE: THREE.MOUSE.DOLLY,
-		RIGHT: THREE.MOUSE.PAN
-	}
-	controls.enableDamping = true
-	controls.enablePan = true
-	controls.minDistance = 1
-	controls.maxDistance = 60
-	controls.maxPolarAngle = Math.PI / 2 - 0.05 //prevent camera below ground
-	controls.minPolarAngle = Math.PI / 4 //prevent top down view
-	
-	controls.update();
-	//////////////////////Orbit Control END////////////////////////////////////
+			}
 
-	window.addEventListener( 'resize', onWindowResize );
-	document.addEventListener( 'visibilitychange', onVisibilityChange );
+			function getIntersections( controller ) {
 
-}
+				tempMatrix.identity().extractRotation( controller.matrixWorld );
 
-function onWindowResize() {
-	camera.aspect = window.innerWidth / window.innerHeight;
-	camera.updateProjectionMatrix();
-	renderer.setSize( window.innerWidth, window.innerHeight );
-}
+				raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
+				raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
 
-function onVisibilityChange() {
-	if ( document.hidden === true ) {
-		clock.stop();
-	} else {
-		clock.start();
-	}
-}
+				return raycaster.intersectObjects( group.children, false );
 
-function animate() {
-	requestAnimationFrame( animate );
-	render();
-}
+			}
 
-//Reference from : https://jsfiddle.net/bentoBAUX/839b7q5p/12/ [audio analysis]
-///////////music analysis///////////
-//We are only analysing the music of the ambient to trigger the transformation of the 3D objects
-var audio = new Audio("/assets/streetSound.mp3");   //Letting audio as the street sound
-	audio.play(); // playing the street sound audio
+			function intersectObjects( controller ) {
 
+				// Do not highlight when already selected
 
-	//audio analyser setup
-	//////Analysing the street sound audio//////
-	var context = new AudioContext();
-	var src = context.createMediaElementSource(audio); //creating the source as audio(the street sound)
-	var analyser = context.createAnalyser(); //create an analyser 
-	src.connect(analyser); 
-	analyser.connect(context.destination);
-	analyser.fftSize = 512;
-	var bufferLength = analyser.frequencyBinCount;
-	var dataArray = new Uint8Array(bufferLength);
+				if ( controller.userData.selected !== undefined ) return;
 
-//////render////////////////
-function render() {
-	renderer.render( scene, camera );
-}
+				const line = controller.getObjectByName( 'line' );
+				const intersections = getIntersections( controller );
 
+				if ( intersections.length > 0 ) {
 
-function render2() {
-	analyser.getByteFrequencyData(dataArray);
-	//console.log(dataArray)
-	requestAnimationFrame(render2);
+					const intersection = intersections[ 0 ];
 
-	//extract different part of the sound analysized data 
-	var lowerHalfArray = dataArray.slice(0, (dataArray.length / 2) - 1);
-	var upperHalfArray = dataArray.slice((dataArray.length / 2) - 1, dataArray.length - 1);
+					const object = intersection.object;
+					object.material.emissive.r = 1;
+					intersected.push( object );
 
-	var overallAvg = avg(dataArray);
-	var lowerMax = max(lowerHalfArray);
-	var lowerAvg = avg(lowerHalfArray);
-	var upperMax = max(upperHalfArray);
-	var upperAvg = avg(upperHalfArray);
+					line.scale.z = intersection.distance;
 
-	var lowerMaxFr = lowerMax / lowerHalfArray.length;
-	var lowerAvgFr = lowerAvg / lowerHalfArray.length;
-	var upperMaxFr = upperMax / upperHalfArray.length;
-	var upperAvgFr = upperAvg / upperHalfArray.length;
+				} else {
 
-	var bassFr = modulate(Math.pow(lowerMaxFr, 0.8), 0, 1, 0, 8);
-	var lowFr = modulate(Math.pow(lowerAvgFr, 0.8), 0, 1, 0, 8);
-	var treFr = modulate(upperMaxFr, 0, 1, 0, 4);
+					line.scale.z = 5;
 
-	const delta = clock.getDelta();
+				}
 
-	//how the three 3D models are transformed based on sound 
-	/////////////FIRST MODEL/////////////
-	if ( mesh !== undefined ) {
-		// const step = delta * speed;
-		// mesh.rotation.y += step;
-		//mesh.position.y = bassFr/8;
-		// mesh.position.x = treFr;
-		mesh.scale.x = 5*bassFr;
-		mesh.scale.y = 5*bassFr;
-		mesh.scale.z = 5*bassFr;
-		// console.log(bassFr);
+			}
 
+			function cleanIntersected() {
 
-		var step = delta * speed;
+				while ( intersected.length ) {
 
-					mesh.rotation.x += step;
+					const object = intersected.pop();
+					object.material.emissive.r = 0;
 
-		// 			mesh.morphTargetInfluences[ 1 ] = mesh.morphTargetInfluences[ 1 ] + step * sign;
+				}
 
-		// 			if ( mesh.morphTargetInfluences[ 1 ] <= 0 || mesh.morphTargetInfluences[ 1 ] >= 1 ) {
+			}
 
-		// 				sign *= - 1;
-		// 			}
+			//
 
-		
-	}
+			function animate() {
 
-	/////////////SECOND MODEL/////////////
-	if ( mesh2 !== undefined ) {
-		// const step = delta * speed;
-		// mesh2.rotation.y += step;
-		//mesh2.position.x = 0.5;
-		// mesh2.position.x = treFr;
-		mesh2.scale.x = 12*lowFr;
-		mesh2.scale.y = 12*lowFr;
-		mesh2.scale.z = 12*lowFr;
-		// console.log(bassFr);
+				renderer.setAnimationLoop( render );
 
-		var step = delta * speed;
+			}
 
-					mesh2.rotation.z += step;
+			function render() {
 
-					// mesh2.morphTargetInfluences[ 1 ] = mesh2.morphTargetInfluences[ 1 ] + step * sign;
+				cleanIntersected();
 
-					// if ( mesh2.morphTargetInfluences[ 1 ] <= 0 || mesh2.morphTargetInfluences[ 1 ] >= 1 ) {
+				intersectObjects( controller1 );
+				intersectObjects( controller2 );
 
-					// 	sign *= - 1;
-					// }
-	}
+				renderer.render( scene, camera );
 
-	//Reference from : https://threejs.org/examples/?q=sphere#webgl_morphtargets_sphere [3D shape updates]
-	/////////////THIRD MODEL/////////////
-	if ( mesh3 !== undefined ) {
-		// const step = delta * speed;
-		// mesh2.rotation.y += step;
-		//mesh3.position.x = 1;
-		// mesh2.position.x = treFr;
-		mesh3.scale.x = 100*treFr;
-		mesh3.scale.y = 100*treFr;
-		mesh3.scale.z = 100*treFr;
-		// console.log(bassFr);
-
-		var step = delta * speed;
-
-					//mesh3.rotation.y += step;
-
-					mesh3.morphTargetInfluences[ 1 ] = mesh3.morphTargetInfluences[ 1 ] + step * sign;
-
-					if ( mesh3.morphTargetInfluences[ 1 ] <= 0 || mesh3.morphTargetInfluences[ 1 ] >= 1 ) {
-
-						sign *= - 1;
-					}
-	}
-
-	renderer.render( scene, camera );
-};
-render2();
-
-		//Reference from : https://jsfiddle.net/bentoBAUX/839b7q5p/12/ [audio analysis]
-		////////////////////////
-        //helper functions for audio
-        function fractionate(val, minVal, maxVal) {
-            return (val - minVal) / (maxVal - minVal);
-        }
-
-        function modulate(val, minVal, maxVal, outMin, outMax) {
-            var fr = fractionate(val, minVal, maxVal);
-            var delta = outMax - outMin;
-            return outMin + (fr * delta);
-        }
-
-        function avg(arr) {
-            var total = arr.reduce(function (sum, b) { return sum + b; });
-            return (total / arr.length);
-        }
-
-        function max(arr) {
-            return arr.reduce(function (a, b) { return Math.max(a, b); })
-        }
+			}
 
 		</script>
 
