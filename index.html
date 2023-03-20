@@ -98,7 +98,7 @@ function init() {
 //Reference from : https://www.youtube.com/watch?v=yPA2z7fl4J8 [GLTF loader]
 //GLTF loader: Head
 const loader = new GLTFLoader()
-loader.load('assets/newheadv2.gltf', function(gltf){
+loader.load('assets/earBluishgreen.gltf', function(gltf){ //'assets/newheadv2.gltf'
     console.log(gltf)
     const root = gltf.scene;
     root.scale.set(0.1,0.1,0.1)
@@ -118,7 +118,7 @@ camera.add( listener );
 
 	//////////first model///////////////
 	// loading in 3D ear object
-	loader.load( '/assets/ear_bluishgreen.gltf', function ( gltf ) {
+	loader.load( '/assets/earBluishgreen.gltf', function ( gltf ) {
 		gltf.scene.traverse( function ( node ) {
 						if ( node.isMesh ) mesh = node;
 					} );
@@ -160,7 +160,7 @@ camera.add( listener );
 
 	//////////second model///////////////
 	// loading in 3D ear object
-	loader.load( '/assets/ear_bluishgreen.gltf', function ( gltf ) {
+	loader.load( '/assets/earBluishgreen.gltf', function ( gltf ) {
 		gltf.scene.traverse( function ( node ) {
 						if ( node.isMesh ) mesh2 = node;
 					} );
@@ -290,7 +290,7 @@ function animate() {
 //Reference from : https://jsfiddle.net/bentoBAUX/839b7q5p/12/ [audio analysis]
 ///////////music analysis///////////
 //We are only analysing the music of the ambient to trigger the transformation of the 3D objects
-var audio = new Audio("/assets/street sound.mp3");   //Letting audio as the street sound
+var audio = new Audio("/assets/streetSound.mp3");   //Letting audio as the street sound
 	audio.play(); // playing the street sound audio
 
 
